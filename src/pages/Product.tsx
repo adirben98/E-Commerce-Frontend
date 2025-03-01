@@ -1,9 +1,12 @@
-import React from "react";
+import { useEffect, useState } from "react";
 import styled from "styled-components";
 import Announcement from "../components/Announcement";
 import Navbar from "../components/Navbar";
 import Footer from "../components/Footer";
 import Newsletter from "../components/Newsletter";
+import { useParams } from "react-router-dom";
+import { ProductProps } from "../components/Product";
+import { publicRequest } from "../service/request";
 
 const Container = styled.div``;
 const Wrapper = styled.div`
@@ -54,11 +57,11 @@ const Select = styled.select`
   padding: 5px;
 `;
 const Option = styled.option``;
-const ColorCircle = styled.div<{ bg: string }>`
+const ColorCircle = styled.div<{ $bg: string }>`
   height: 20px;
   width: 20px;
   border-radius: 50%;
-  background-color: ${(prop) => prop.bg};
+  background-color: ${(prop) => prop.$bg};
   cursor: pointer;
 `;
 const ButtonsContainer = styled.div`
@@ -92,50 +95,59 @@ const AddButton = styled.button`
   border: 1px solid teal;
   cursor: pointer;
 
-  &:hover{
+  &:hover {
     background-color: aliceblue;
   }
 `;
 export default function Product() {
+  const { id } = useParams();
+  const [product, setProduct] = useState<ProductProps>();
+  const [amount, setAmount] = useState(1);
+  const [color, setColor] = useState('');
+  const [size, setSize] = useState('');
+  const handleAmount = (op: string) => {
+    if (op === "+") setAmount((am) => am + 1);
+    else setAmount((am) => (amount !== 1 ? am - 1 : 1));
+  };
+  useEffect(() => {
+    const getProduct = async () => {
+      const res = await publicRequest.get(`/products/${id}`);
+      setProduct(res.data);
+    };
+    getProduct();
+  }, [id]);
+  if (!product) return <div>Loading...</div>;
   return (
     <Container>
       <Announcement />
       <Navbar />
       <Wrapper>
-        <Image src="https://i.ibb.co/S6qMxwr/jean.jpg" />
+        <Image src={product.img} />
         <Right>
-          <Title>Denim Jumpsuit</Title>
-          <Desc>
-            Lorem ipsum dolor sit amet, consectetur adipiscing elit. Donec
-            venenatis, dolor in finibus malesuada, lectus ipsum porta nunc, at
-            iaculis arcu nisi sed mauris. Nulla fermentum vestibulum ex, eget
-            tristique tortor pretium ut. Curabitur elit justo, consequat id
-            condimentum ac, volutpat ornare.
-          </Desc>
-          <Price>$ 20</Price>
+          <Title>{product.title}</Title>
+          <Desc>{product.desc}</Desc>
+          <Price>$ {product.price}</Price>
           <FiltersContainer>
             <Filter>
               <FilterTitle>Color</FilterTitle>
-              <ColorCircle bg={"black"} />
-              <ColorCircle bg={"darkblue"} />
-              <ColorCircle bg={"gray"} />
+              {product.color.map((c) => (
+                <ColorCircle onClick={()=>setColor(c)} key={c} $bg={c} />
+              ))}
             </Filter>
             <Filter>
               <FilterTitle>Size</FilterTitle>
               <Select>
-                <Option>XS</Option>
-                <Option>S</Option>
-                <Option>M</Option>
-                <Option>L</Option>
-                <Option>XL</Option>
+                {product.size.map((s) => (
+                  <Option onClick={()=>setSize(s)} key={s}>{s}</Option>
+                ))}
               </Select>
             </Filter>
           </FiltersContainer>
           <ButtonsContainer>
             <AmountSection>
-              <SignSpan>-</SignSpan>
-              <Amount>1</Amount>
-              <SignSpan>+</SignSpan>
+              <SignSpan onClick={() => handleAmount("-")}>-</SignSpan>
+              <Amount>{amount}</Amount>
+              <SignSpan onClick={() => handleAmount("+")}>+</SignSpan>
             </AmountSection>
             <AddButton>Add To Cart</AddButton>
           </ButtonsContainer>

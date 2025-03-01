@@ -1,6 +1,8 @@
 import { Search } from "@mui/icons-material";
 import ShoppingCartOutlinedIcon from "@mui/icons-material/ShoppingCartOutlined";
 import { Badge } from "@mui/material";
+import { RootState } from "../redux/store";
+import { useSelector } from "react-redux";
 import styled from "styled-components";
 const Contanier = styled.div`
   height: 60px;
@@ -56,6 +58,7 @@ const Menuitem = styled.span`
 `;
 
 export default function Navbar() {
+  const quantity = useSelector((state: RootState) => state.cart.quantity);
   return (
     <Contanier>
       <Left>
@@ -74,7 +77,7 @@ export default function Navbar() {
         <Menuitem>Register</Menuitem>
         <Menuitem>Sign in</Menuitem>
         <Menuitem>
-          <Badge badgeContent={4} color="primary">
+          <Badge badgeContent={quantity} color="primary">
             <ShoppingCartOutlinedIcon />
           </Badge>
         </Menuitem>

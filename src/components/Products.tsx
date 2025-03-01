@@ -1,92 +1,84 @@
-import React from "react";
+import { useEffect, useState } from "react";
 import styled from "styled-components";
-import { popularProducts } from "../data";
-import {
-  FavoriteBorderOutlined,
-  SearchOutlined,
-  ShoppingCartOutlined,
-} from "@mui/icons-material";
+import Product, { ProductProps } from "./Product";
+import axios from "axios";
+import { Filters } from "../pages/ProductList";
 
-export default function Products() {
-  const Icons = styled.div`
-    height: 100%;
-    width: 100%;
-    display: flex;
-    position: absolute;
-    justify-content: center;
-    align-items: center;
-    z-index: 3;
-    background-color: #80808050;
-    opacity: 0;
-  `;
-  const Container = styled.div`
-    display: flex;
-    flex-wrap: wrap;
-    padding: 20px;
-  `;
-  const Product = styled.div`
-    flex: 1;
-    min-width: 300px;
-    height: 400px;
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: #f5fbfd;
-    margin: 3px;
-    position: relative;
-    &:hover ${Icons}{
-        opacity: 1;
+const Container = styled.div`
+  padding: 20px;
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: space-between;
+`;
+type ProductsProps = {
+  cat?: string;
+  filters?: Filters;
+  sort?: string;
+};
+
+const Products = ({ cat, filters, sort }: ProductsProps) => {
+  const [products, setProducts] = useState<ProductProps[]>([]);
+  const [filteredProducts, setFilteredProducts] = useState<ProductProps[]>([]);
+
+  useEffect(() => {
+    const getProducts = async (signal:AbortSignal) => {
+      try {
+        const res = await axios.get(
+          cat
+            ? `http://localhost:3000/products?category=${cat}`
+            : "http://localhost:3000/products",{signal}
+        );
+        setProducts(res.data);
+      } catch (err) {
+        if(axios.isCancel(err))
+          return
+      }
+    };
+    const controller=new AbortController()
+    getProducts(controller.signal);
+    return ()=>controller.abort()
+  }, [cat]);
+console.log(filteredProducts)
+useEffect(() => {
+  if (cat && filters) {
+    setFilteredProducts(
+      products.filter((item) => {
+        const colorMatch = filters.color ? item.color.includes(filters.color) : true;
+        const sizeMatch = filters.size ? item.size.includes(filters.size) : true;
+
+        return colorMatch && sizeMatch; 
+      })
+    );
+  }
+}, [products, cat, filters]);
+
+
+
+  useEffect(() => {
+    if (sort === "newest") {
+      setFilteredProducts((prev) =>
+        [...prev].sort((a, b) => a.createdAt.getTime() - b.createdAt.getTime())
+      );
+    } else if (sort === "asc") {
+      setFilteredProducts((prev) =>
+        [...prev].sort((a, b) => a.price - b.price)
+      );
+    } else {
+      setFilteredProducts((prev) =>
+        [...prev].sort((a, b) => b.price - a.price)
+      );
     }
-  `;
-  const Image = styled.img`
-    width: 200px;
-    height: 200px;
-    object-fit: cover;
-    z-index: 2;
-  `;
-  const Circle = styled.div`
-    position: absolute;
-    background-color: white;
-    height: 150px;
-    width: 150px;
-    border-radius: 50%;
-  `;
+  }, [sort]);
 
-  const Icon = styled.div`
-    display: flex;
-    justify-content: center;
-    align-items: center;
-    background-color: white;
-    height: 40px;
-    width: 40px;
-    border-radius: 50%;
-    cursor: pointer;
-    margin: 5px;
-
-    &:hover {
-      transform: scale(1.1);
-      background-color: lightgray;
-    }
-  `;
   return (
     <Container>
-      {popularProducts.map((p) => (
-        <Product key={p.id}>
-          <Image src={p.img} />
-          <Circle />
-          <Icons>
-            <Icon>
-              <FavoriteBorderOutlined />
-            </Icon>
-            <Icon>
-              <SearchOutlined />
-            </Icon>
-            <Icon>
-              <ShoppingCartOutlined />
-            </Icon>
-          </Icons>
-        </Product>
-      ))}
+      {cat
+        ? filteredProducts.map((item) => <Product item={item} key={item._id} />)
+        : products
+            .slice(0, 8)
+            .map((item) => <Product item={item} key={item._id} />)}
     </Container>
   );
-}
+};
+
+export default Products;
