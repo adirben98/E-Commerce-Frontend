@@ -1,5 +1,9 @@
-import React from "react";
+import React, { useState } from "react";
+import { useDispatch, useSelector } from "react-redux";
 import styled from "styled-components";
+import { RootState } from "../redux/store";
+import { login, loginFailed, loginSuccess } from "../redux/userRedux";
+import { publicRequest } from "../service/request";
 const Container = styled.div`
   height: 100vh;
   width: 100vw;
@@ -26,7 +30,7 @@ const Form = styled.form`
   flex-direction: column;
 `;
 const Input = styled.input`
-flex: 1;
+  flex: 1;
   margin: 10px 0px;
   padding: 10px;
 `;
@@ -39,30 +43,68 @@ const Button = styled.button`
   font-weight: 400;
   border: none;
   cursor: pointer;
-&:hover{
-    color:black;
-}
+  &:hover {
+    color: black;
+  }
+  &:disabled{
+    color: green;
+    cursor: not-allowed;
+  }
 `;
 const Link = styled.a`
   display: block;
   cursor: pointer;
-  &:hover{
-    color:blue;
+  &:hover {
+    color: blue;
   }
+`;
+const Error = styled.span`
+  font-size: 24px;
+  font-weight: 500;
+  color: red;
 `;
 
 export default function Login() {
+  const { isFetching, error } = useSelector((state: RootState) => state.user);
+  const dispatch = useDispatch();
+  const [username, setUsername] = useState<string>();
+  const [password, setPassword] = useState<string>();
+  async function handleClick(e: React.MouseEvent<HTMLButtonElement>) {
+    e.preventDefault();
+    try {
+      dispatch(login());
+      const res = await publicRequest.post("/auth/login", {
+        username,
+        password,
+      });
+      dispatch(loginSuccess(res.data));
+    } catch (e) {
+      console.log(e);
+      dispatch(loginFailed());
+    }
+  }
+
   return (
     <Container>
       <Wrapper>
         <Title>SIGN IN</Title>
         <Form>
-          <Input placeholder="username" />
-          <Input placeholder="password" />
+          <Input
+            placeholder="username"
+            onChange={(e) => setUsername(e.target.value)}
+          />
+          <Input
+            placeholder="password"
+            type="password"
+            onChange={(e) => setPassword(e.target.value)}
+          />
         </Form>
-        <Button>Login</Button>
+        <Button disabled={isFetching} onClick={handleClick}>
+          Login
+        </Button>
         <Link>DO NOT YOU REMEMBER THE PASSWORD?</Link>
         <Link>CREATE A NEW ACCOUNT</Link>
+        {error && <Error>Error accured</Error>}
       </Wrapper>
     </Container>
   );

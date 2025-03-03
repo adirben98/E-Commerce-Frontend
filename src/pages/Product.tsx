@@ -7,6 +7,8 @@ import Newsletter from "../components/Newsletter";
 import { useParams } from "react-router-dom";
 import { ProductProps } from "../components/Product";
 import { publicRequest } from "../service/request";
+import { useDispatch } from "react-redux";
+import { addItem } from "../redux/cartRedux";
 
 const Container = styled.div``;
 const Wrapper = styled.div`
@@ -99,24 +101,58 @@ const AddButton = styled.button`
     background-color: aliceblue;
   }
 `;
+export interface CartProduct extends Omit<ProductProps, "color" | "size"> {
+  color: string;
+  size: string;
+  amount:number;
+}
+
 export default function Product() {
   const { id } = useParams();
-  const [product, setProduct] = useState<ProductProps>();
+  const [product, setProduct] = useState<ProductProps | null>(null);
   const [amount, setAmount] = useState(1);
-  const [color, setColor] = useState('');
-  const [size, setSize] = useState('');
-  const handleAmount = (op: string) => {
-    if (op === "+") setAmount((am) => am + 1);
-    else setAmount((am) => (amount !== 1 ? am - 1 : 1));
-  };
+  const [color, setColor] = useState("");
+  const [size, setSize] = useState("");
+  const [loading, setLoading] = useState(true);
+  const dispatch = useDispatch();
+
   useEffect(() => {
     const getProduct = async () => {
-      const res = await publicRequest.get(`/products/${id}`);
-      setProduct(res.data);
+      try {
+        setLoading(true);
+        const res = await publicRequest.get(`/products/${id}`);
+        setProduct(res.data);
+      } catch (error) {
+        console.error("Failed to fetch product:", error);
+      } finally {
+        setLoading(false);
+      }
     };
     getProduct();
   }, [id]);
-  if (!product) return <div>Loading...</div>;
+
+  if (loading) return <div>Loading...</div>;
+  if (!product) return <div>Product not found.</div>;
+
+  const handleAmount = (op: string) => {
+    setAmount((prev) => (op === "+" ? prev + 1 : Math.max(prev - 1, 1)));
+  };
+
+  const handleAddToCart = (event: React.MouseEvent<HTMLButtonElement>) => {
+    event.preventDefault();
+    dispatch(
+      addItem({
+        product: {
+          ...product,
+          color,
+          size,
+          amount
+        },
+        price: amount * product.price,
+      })
+    );
+  };
+
   return (
     <Container>
       <Announcement />
@@ -126,19 +162,19 @@ export default function Product() {
         <Right>
           <Title>{product.title}</Title>
           <Desc>{product.desc}</Desc>
-          <Price>$ {product.price}</Price>
+          <Price>${product.price}</Price>
           <FiltersContainer>
             <Filter>
               <FilterTitle>Color</FilterTitle>
-              {product.color.map((c) => (
-                <ColorCircle onClick={()=>setColor(c)} key={c} $bg={c} />
+              {product.color?.map((c) => (
+                <ColorCircle onClick={() => setColor(c)} key={c} $bg={c} />
               ))}
             </Filter>
             <Filter>
               <FilterTitle>Size</FilterTitle>
-              <Select>
-                {product.size.map((s) => (
-                  <Option onClick={()=>setSize(s)} key={s}>{s}</Option>
+              <Select onChange={(e) => setSize(e.target.value)}>
+                {product.size?.map((s) => (
+                  <Option key={s}>{s}</Option>
                 ))}
               </Select>
             </Filter>
@@ -149,7 +185,7 @@ export default function Product() {
               <Amount>{amount}</Amount>
               <SignSpan onClick={() => handleAmount("+")}>+</SignSpan>
             </AmountSection>
-            <AddButton>Add To Cart</AddButton>
+            <AddButton onClick={handleAddToCart}>Add To Cart</AddButton>
           </ButtonsContainer>
         </Right>
       </Wrapper>

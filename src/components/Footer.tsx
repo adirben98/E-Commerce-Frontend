@@ -84,7 +84,7 @@ import {
     return (
       <Container>
         <Left>
-          <Logo>LAMA.</Logo>
+          <Logo>E-Commerce.</Logo>
           <Desc>
             There are many variations of passages of Lorem Ipsum available, but
             the majority have suffered alteration in some form, by injected
@@ -129,7 +129,7 @@ import {
             <Phone style={{marginRight:"10px"}}/> +1 234 56 78
           </ContactItem>
           <ContactItem>
-            <MailOutline style={{marginRight:"10px"}} /> contact@lama.dev
+            <MailOutline style={{marginRight:"10px"}} /> contact@e-commerce.dev
           </ContactItem>
           <Payment src="https://i.ibb.co/Qfvn4z6/payment.png" />
         </Right>

@@ -5,11 +5,15 @@ import Home from "./pages/Home";
 import ProductList from "./pages/ProductList";
 import Register from "./pages/Register";
 import Product from "./pages/Product";
-// import Cart from "./pages/Cart";
+ import Cart from "./pages/Cart";
+import Success from "./pages/Success";
+import { useSelector } from "react-redux";
+import { RootState } from "./redux/store";
+ 
 
 
 function App() {
-  const user=true;
+  const user=useSelector((state:RootState)=>state.user.user);
   return (
     <Routes>
       <Route path="/" element={<Home/>}/>
@@ -17,7 +21,8 @@ function App() {
       <Route path="/login" element={user?<Navigate to={"/"}/>:<Login/>}/>
       <Route path="/register" element={user?<Navigate to="/"/>:<Register/>}/>
       <Route path="/product/:id" element={<Product/>}/>
-      {/* <Route path="/cart/:userId" element={<Cart/>}/> */}
+      <Route path="/cart" element={<Cart/>}/>
+      <Route path="/success" element={<Success/>}/>
     </Routes>
   );
 }
